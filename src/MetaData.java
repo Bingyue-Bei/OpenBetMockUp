@@ -17,6 +17,8 @@ public class MetaData {
                 atZone(ZoneId.of("UTC")).toLocalDateTime();
         endPlay = Instant.ofEpochMilli(System.currentTimeMillis()).
                 atZone(ZoneId.of("UTC")).toLocalDateTime();
+        loginTime = Instant.ofEpochMilli(System.currentTimeMillis()).
+                atZone(ZoneId.of("UTC")).toLocalDateTime();
     }
     public void initializeMetaData(int userDeposit, int userMaxSpend, int userMaxLoss, int userPlayTime, int userExclusion) {
         init = true;
@@ -35,6 +37,8 @@ public class MetaData {
                 atZone(ZoneId.of("UTC")).toLocalDateTime();
         endPlay = Instant.ofEpochMilli(System.currentTimeMillis()).
                 atZone(ZoneId.of("UTC")).toLocalDateTime();
+        loginTime = Instant.ofEpochMilli(System.currentTimeMillis()).
+                atZone(ZoneId.of("UTC")).toLocalDateTime();
     }
 
     public void playTimeCountDownRestart() {
@@ -47,7 +51,7 @@ public class MetaData {
     public int sessionTimeout() {
         LocalDateTime currentTime = Instant.ofEpochMilli(System.currentTimeMillis()).
                 atZone(ZoneId.of("UTC")).toLocalDateTime();
-        return currentTime.compareTo(beginPlay.plus(playTime));
+        return playTime.compareTo(Duration.between(beginPlay, currentTime));
     }
 
     public LocalDateTime unfreezeTime() {
@@ -124,11 +128,21 @@ public class MetaData {
     }
 
     public LocalDateTime setBeginTime(int hour) {
-        return beginPlay.minusHours(hour);
+        beginPlay =  beginPlay.minusHours(hour);
+        return beginPlay;
     }
 
     public Duration getActualPlayTime() {
         return Duration.between(beginPlay, endPlay);
+    }
+
+    public LocalDateTime setLoginTime(int hour) {
+        loginTime = loginTime.minusHours(hour);
+        return loginTime;
+    }
+
+    public Duration getLoginTime() {
+        return Duration.between(loginTime, endPlay);
     }
 
     private boolean init = false;
@@ -139,4 +153,5 @@ public class MetaData {
     private Duration exclusionTime = Duration.ofHours(DEFAULT_MINIMUM_EXCLUSION_TIME);
     private LocalDateTime beginPlay;
     private LocalDateTime endPlay;
+    private LocalDateTime loginTime;
 }

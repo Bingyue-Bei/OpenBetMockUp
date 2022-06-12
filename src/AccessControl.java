@@ -52,7 +52,6 @@ public class AccessControl {
         if (password.equals(passwords.get(user))) {
             MetaData curUser = userData.get(user);
             if (twoFactorAuthentication()) {
-                userStatus.replace(user, Status.LOGIN);
                 if (!curUser.isInitialized()) {
                     setUserMetaData(curUser);
                     userStatus.replace(user, Status.ACTIVE);
@@ -80,6 +79,7 @@ public class AccessControl {
                 return false;
             }
         } else {
+            System.out.println("Wrong password! Please try again!");
             return false;
         }
     }
@@ -139,7 +139,7 @@ public class AccessControl {
         if (curUserExclusion.equals(Duration.ZERO)) {
             System.out.println("It possible someone compromise your password. " +
                     "Please contact customer service immediately to prevent financial loss.");
-        } else if (curUserExclusion.equals(Duration.ofHours(Long.MAX_VALUE))) {
+        } else if (curUserExclusion.equals(Duration.ofHours(curUser.MAX_DURATION))) {
             System.out.println("Due to multiple violations of terms of service, " +
                     "your account has been locked. Please contact customer service tp unlock it.");
         }  else {
@@ -150,13 +150,13 @@ public class AccessControl {
     }
 
     public boolean isSuspended(String user) {
-        if (currentPlayer.equals(user)) {
-            currentPlayer = null;
-        }
         return Status.SUSPENDED.equals(userStatus.get(user));
     }
 
     public void suspendAccount(String user) {
+        if (currentPlayer.equals(user)) {
+            currentPlayer = null;
+        }
         if (userStatus.containsKey(user)) {
             userStatus.replace(user, Status.SUSPENDED);
         }
@@ -187,9 +187,10 @@ public class AccessControl {
 
         curUser.reduceDeposit(spend);
         curUser.setBeginTime(playHourCur);
+        curUser.setLoginTime(playHourCur);
 
         if (curUser.sessionTimeout() <= 0 &&
-                curUser.getActualPlayTime().compareTo(Duration.ofHours(curUser.DEFAULT_MAXIMUM_PLAY_TIME)) >= 0) {
+                curUser.getLoginTime().compareTo(Duration.ofHours(curUser.DEFAULT_MAXIMUM_PLAY_TIME)) >= 0) {
             System.out.println("You have spend more tha 5 hours at our website playing without any break. ");
             System.out.println("You will now be forced to log out of our website and will not be able to log in until "
                     + curUser.unfreezeTime());
@@ -202,6 +203,7 @@ public class AccessControl {
                     "spending or losing more that your set limit");
              System.out.println("\"You will now be forced to log out of our website and will not be able to log in until \"\n" +
                     "            + curUser.unfreezeTime()");
+             suspendAccount(user);
              curUser.suspendWithExclusion();
              return false;
         } else if (curUser.sessionTimeout() <= 0) {
@@ -229,7 +231,7 @@ public class AccessControl {
                 userStatus.replace(user, Status.ACTIVE);
                 return true;
             } else {
-                userStatus.replace(user, Status.SUSPENDED);
+                suspendAccount(user);
                 System.out.println("Our system noticed something strange is going on with your account. \n" +
                         "Therefore, you will be temporarily suspended.");
                 curUser.suspendWithExclusion();
