@@ -1,4 +1,12 @@
+# MacOS System files
+.DS_Store
+
+#Metadata file for Intellij
+*.iml
+.idea/
+
 # Compiled class file
+/out
 *.class
 
 # Log file
